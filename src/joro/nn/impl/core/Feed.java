@@ -3,38 +3,35 @@ package joro.nn.impl.core;
 import java.util.Arrays;
 
 public final class Feed {
-  private double[] input;
-  private double[] output;
+  private double[] inputs;
+  private double[] outputs;
 
-  public Feed(int inputCount, int outputCount) {
-    if((inputCount <= 0) || (outputCount <= 0)) {
-      throw new IllegalArgumentException("Both input and output should contain at least one element.\n" +  
-                                         "Input count: " + inputCount + 
-                                         "Output count: " + outputCount);
+  public double[] getInputs() {
+    return inputs;
+  }
+
+  public void setInputs(double[] inputs) {
+    if (inputs.length < 1) {
+      throw new IllegalArgumentException("There should be at least one input value.");
     }
 
-    input = new double[inputCount];
-    output = new double[outputCount];
+    this.inputs = inputs;
   }
 
-  public double[] getInput() {
-    return input;
+  public double[] getOutputs() {
+    return outputs;
   }
 
-  public void setInput(double[] input) {
-    this.input = input;
-  }
+  public void setOutputs(double[] outputs) {
+    if (outputs == null || outputs.length < 1) {
+      throw new IllegalArgumentException("There should be at least one output value.");
+    }
 
-  public double[] getOutput() {
-    return output;
-  }
-
-  public void setOutput(double[] output) {
-    this.output = output;
+    this.outputs = outputs;
   }
 
   @Override
   public String toString() {
-    return "Input: " + Arrays.toString(input) + " -> Output: " + Arrays.toString(output);
+    return "Input: " + Arrays.toString(inputs) + " -> Output: " + Arrays.toString(outputs);
   }
 }

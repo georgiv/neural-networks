@@ -10,11 +10,19 @@ public final class FeedForwardLayer implements Layer {
 
   @Override
   public void adjust(Neuron... neurons) {
+    if (neurons.length < 1) {
+      throw new IllegalArgumentException("There should be at least one neuron in a layer.");
+    }
+
     this.neurons = neurons;
   }
 
   @Override
-  public double[] activate(double... input) {
-    return Stream.of(neurons).mapToDouble(neuron -> neuron.applyTransferFunction(input)).toArray();
+  public double[] activate(double... inputs) {
+    if (inputs.length < 1) {
+      throw new IllegalArgumentException("There should be at least one input value.");
+    }
+
+    return Stream.of(neurons).mapToDouble(neuron -> neuron.applyTransferFunction(inputs)).toArray();
   }
 }

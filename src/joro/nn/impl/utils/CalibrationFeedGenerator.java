@@ -20,6 +20,9 @@ public final class CalibrationFeedGenerator {
   public static List<Feed> generate(Path path) {
     List<Feed> result = new ArrayList<>();
 
+    int inputsCount = -1;
+    int outputsCount = -1;
+
     try {
       BufferedReader br = Files.newBufferedReader(path, Charset.forName("UTF-8"));
       String line = null;
@@ -35,6 +38,14 @@ public final class CalibrationFeedGenerator {
             inputs.add(value);
           }
 
+          if (inputsCount == -1) {
+            inputsCount = inputs.size();
+          }
+          if (inputsCount != inputs.size()) {
+            throw new IllegalArgumentException("All test cases should have the same input values count.\n" + 
+                                               "There's a test which contains " + inputs.size() + " input elements, while all previous tests contain " + inputsCount + " input elements.");
+          }
+
           String outputToken = tokenizer.nextToken().trim();
           StringTokenizer outputTokenizer = new StringTokenizer(outputToken, ",");
           List<Double> outputs = new ArrayList<Double>();
@@ -44,19 +55,27 @@ public final class CalibrationFeedGenerator {
             outputs.add(value);
           }
 
-          Feed feed = new Feed(inputs.size(), outputs.size());
+          if (outputsCount == -1) {
+            outputsCount = outputs.size();
+          }
+          if (outputsCount != outputs.size()) {
+            throw new IllegalArgumentException("All test cases should have the same output values count.\n" + 
+                                               "There's a test which contains " + outputs.size() + " output elements, while all previous tests contain " + outputsCount + " output elements.");
+          }
+
+          Feed feed = new Feed();
 
           double[] inputsArr = new double[inputs.size()];
           for (int i = 0; i < inputsArr.length; i++) {
             inputsArr[i] = inputs.get(i);
           }
-          feed.setInput(inputsArr);
+          feed.setInputs(inputsArr);
 
           double[] outputsArr = new double[outputs.size()];
           for (int i = 0; i < outputsArr.length; i++) {
             outputsArr[i] = outputs.get(i);
           }
-          feed.setOutput(outputsArr);
+          feed.setOutputs(outputsArr);
 
           result.add(feed);
         } else {
@@ -65,6 +84,11 @@ public final class CalibrationFeedGenerator {
                                              "Received: " + line);
         }
       }
+
+      if (result.size() < 1) {
+        throw new IllegalArgumentException("The calibration tests cannot be zero. There should be at least one test for each output class.");
+      }
+
       return result;
     } catch (IOException ioEx) {
       throw new RuntimeException(ioEx);

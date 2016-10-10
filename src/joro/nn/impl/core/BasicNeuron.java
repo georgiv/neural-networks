@@ -21,6 +21,10 @@ public final class BasicNeuron implements Neuron {
   }
 
   public void setWeights(double[] weights) {
+    if (weights.length < 1) {
+      throw new IllegalArgumentException("There should be at least one weight value.");
+    }
+
     this.weights = weights;
   }
 
@@ -33,8 +37,14 @@ public final class BasicNeuron implements Neuron {
   }
 
   @Override
-  public final double applyTransferFunction(double... input) {
-    double result = transferFunction.applyAsDouble(produceNetInput(input));
+  public final double applyTransferFunction(double... inputs) {
+    if (inputs.length != weights.length) {
+      throw new IllegalArgumentException("The input values count should be the same as the weight values count.\n" + 
+                                         "Inputs: " + Arrays.toString(inputs) + "\n" + 
+                                         "Weights: " + Arrays.toString(weights));
+    }
+
+    double result = transferFunction.applyAsDouble(produceNetInput(inputs));
     return Calculator.roundDouble(result);
   }
 
@@ -43,8 +53,8 @@ public final class BasicNeuron implements Neuron {
     return "BasicNeuron -> weights: " + Arrays.toString(weights) + ", bias: " + bias;
   }
 
-  private double produceNetInput(double... input) {
-    double[] product = Calculator.multiplyDoubleArrays(input, weights);
+  private double produceNetInput(double... inputs) {
+    double[] product = Calculator.multiplyDoubleArrays(inputs, weights);
     return Calculator.roundDouble(bias + DoubleStream.of(product).sum());
   }
 }

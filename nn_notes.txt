@@ -6,7 +6,6 @@ Backlog:
 5. The Hebb rule does not work when the input vectors are not orthogonal and the input vectors contain values different than -1 and 1 (tests 07 - 10).
 6. Write own method for eigenvalues calculation instead of using the Jama library.
 7. LMS: implement algorithm which will take into consideration the probabilities of input vector occurrences.
-8.
 
 ----------------------------------------------
 Library:

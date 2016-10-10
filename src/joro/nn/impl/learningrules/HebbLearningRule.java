@@ -17,8 +17,8 @@ import joro.nn.impl.utils.Calculator;
 
 public final class HebbLearningRule implements LearningRule {
   private Layer ffLayer;
-  private BasicNeuron[] neurons;
   private List<Feed> calibrationFeed;
+  private BasicNeuron[] neurons;
   private NetworkType networkType;
   private TransferFunctionType transferFunctionType;
   private double[][] inputs;
@@ -35,158 +35,154 @@ public final class HebbLearningRule implements LearningRule {
   @Override
   public void converge() {
     neurons = initNeurons();
+    ffLayer.adjust(neurons);
 
-    if (isAutoassociator && transferFunctionType == TransferFunctionType.HARD_LIMIT) {
-      double[][] result = convertBipolarToBinaryWeights();
-      adjustNeurons(result);
+    if (transferFunctionType == TransferFunctionType.HARD_LIMIT && isAutoassociator) {
+      double[][] binaryWeights = calculateBinaryWeights(inputs, outputs);
+      adjustNeurons(binaryWeights);
+
+      // Test area
       for (int i = 0; i < neurons.length; i++) {
         System.out.println(neurons[i]);
       }
+      // End of test area
+
       return;
     }
 
     boolean isHebbianRuleApplicable = false;
-    if ((transferFunctionType != TransferFunctionType.HARD_LIMIT) && (transferFunctionType != TransferFunctionType.SYMMETRICAL_HARD_LIMIT)) {
+    if (transferFunctionType == TransferFunctionType.LINEAR) {
       isHebbianRuleApplicable = checkForOrthonormality(inputs);
     } else {
       isHebbianRuleApplicable = checkForOrthogonality(inputs);
     }
 
-    if (isHebbianRuleApplicable) {
-      adjustNeurons(applyHebbianRule(inputs, outputs));
-      for (int i = 0; i < neurons.length; i++) {
-        System.out.println(neurons[i]);
-      }
-      return;
-    }
-
-    double[][] weights = null;
-    if (inputs.length == inputs[0].length) {
-      weights = Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), Calculator.getInverseMatrix(inputs));
-    } else {
-      if (inputs.length < inputs[0].length) {
-        weights = Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), Calculator.getLeftPseudoinverseMatrix(Calculator.transposeMatrix(inputs)));
-      } else {
-        weights = Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), Calculator.getRightPseudoinverseMatrix(Calculator.transposeMatrix(inputs)));
-      }
-    }
+    double[][] weights = calculateWeights(inputs, outputs, isHebbianRuleApplicable);
     adjustNeurons(weights);
 
+    // Test area
     for (int i = 0; i < neurons.length; i++) {
       System.out.println(neurons[i]);
     }
+    // End of test area
+
   }
 
   private BasicNeuron[] initNeurons() {
-    if (calibrationFeed.size() < 1) {
-      throw new IllegalArgumentException("The calibration tests cannot be zero. There should be at least one test for each output class.");
-    }
-
     inputs = new double[calibrationFeed.size()][];
     outputs = new double[calibrationFeed.size()][];
 
-    isAutoassociator = Arrays.equals(calibrationFeed.get(0).getInput(), calibrationFeed.get(0).getOutput());
+    isAutoassociator = Arrays.equals(calibrationFeed.get(0).getInputs(), calibrationFeed.get(0).getOutputs());
 
-    int inputCount = calibrationFeed.get(0).getInput().length;
-    int outputCount = calibrationFeed.get(0).getOutput().length;
+    int inputsCount = calibrationFeed.get(0).getInputs().length;
+    int outputsCount = calibrationFeed.get(0).getOutputs().length;
 
-    boolean containsOutputNegativeOne = false;
-    boolean containsOutputZero = false;
-    boolean containsOutputPositiveOne = false;
-    boolean containsOutputOthers = false;
+    boolean containsNegativeOne = false;
+    boolean containsZero = false;
+    boolean containsPositiveOne = false;
+    boolean containsOthers = false;
 
     for (int i = 0; i < calibrationFeed.size(); i++) {
-      double[] input = calibrationFeed.get(i).getInput();
-      if (input.length != inputCount) {
-        throw new IllegalArgumentException("All input feed entries should contain the same number of elements.\n" + 
-                                           "The input feed entry on row " + i + " contains " + input.length + " elements, " + 
-                                            "which differs from the previous input feed entries " + inputCount + ".");
-      }
-      inputs[i] = input;
-
-      double[] output = calibrationFeed.get(i).getOutput();
-      if (output.length != outputCount) {
-        throw new IllegalArgumentException("All output feed entries should contain the same number of elements.\n" + 
-                                           "The output feed entry on row " + i + " contains " + output.length + " elements, " + 
-                                            "which differs from the previous output feed entries " + outputCount + ".");
-      }
-      outputs[i] = output;
+      inputs[i] = calibrationFeed.get(i).getInputs();
+      outputs[i] = calibrationFeed.get(i).getOutputs();
 
       if (isAutoassociator) {
-        isAutoassociator = Arrays.equals(input, output);
+        isAutoassociator = Arrays.equals(inputs[i], outputs[i]);
       }
 
-      if (!containsOutputOthers) {
-        if (!containsOutputNegativeOne) {
-          containsOutputNegativeOne = DoubleStream.of(output).anyMatch(value -> value == -1);
+      if (!containsOthers) {
+        if (!containsNegativeOne) {
+          containsNegativeOne = DoubleStream.of(outputs[i]).anyMatch(value -> value == -1);
         }
-        if (!containsOutputZero) {
-          containsOutputZero = DoubleStream.of(output).anyMatch(value -> value == 0);
+        if (!containsZero) {
+          containsZero = DoubleStream.of(outputs[i]).anyMatch(value -> value == 0);
         }
-        if (!containsOutputPositiveOne) {
-          containsOutputPositiveOne = DoubleStream.of(output).anyMatch(value -> value == 1);
+        if (!containsPositiveOne) {
+          containsPositiveOne = DoubleStream.of(outputs[i]).anyMatch(value -> value == 1);
         }
-        containsOutputOthers = DoubleStream.of(output).anyMatch(value -> value != -1 && value != 0 && value != 1);
+        containsOthers = DoubleStream.of(outputs[i]).anyMatch(value -> value != -1 && value != 0 && value != 1);
       }
 
-      if (networkType == NetworkType.PERCEPTION) {
-        if (containsOutputOthers || (containsOutputNegativeOne && containsOutputZero)) {
-          throw new IllegalArgumentException("The output values should contain only:\n" + 
-                                             " - 0 and 1 for hard limit transfer function (hardlim)\n" + 
-                                             " - -1 and 1 for symetric hard limit transfer function (hardlims).");
+      if (networkType == NetworkType.PERCEPTION || isAutoassociator) {
+        if (containsOthers || (containsNegativeOne && containsZero)) {
+          throw new IllegalArgumentException("The target values for selected neural network should contain only:\n" + 
+                                             " - 1 and 0 elements for hard limit transfer function (hardlim)\n" + 
+                                             " - 1 and -1 for symetric hard limit transfer function (hardlims).");
         }
       }
     }
 
-    TransferFunctionType transferFunctionType = null;
-
     if (networkType == NetworkType.PERCEPTION) {
+      double[] bias = new double[inputs.length];
+      Arrays.fill(bias, 1);
+      inputs = addBias(inputs, bias);
       hasBias = true;
-      addBias(); // TODO: Wrong place, cause misbehaviour
+    }
 
-      transferFunctionType = containsOutputZero ? TransferFunctionType.HARD_LIMIT : TransferFunctionType.SYMMETRICAL_HARD_LIMIT;
+    TransferFunctionType transferFunctionType = null;
+    if (networkType == NetworkType.PERCEPTION) {
+      transferFunctionType = containsZero ? TransferFunctionType.HARD_LIMIT : TransferFunctionType.SYMMETRICAL_HARD_LIMIT;
     } else if (networkType == NetworkType.LINEAR_ASSOCIATOR) {
-//      transferFunctionType = containsOthers || (containsNegativeOne && containsZero && containsPositiveOne) ? 
-//          TransferFunctionType.LINEAR : 
-//          containsZero ? 
-//              TransferFunctionType.HARD_LIMIT : 
-//              TransferFunctionType.SYMMETRICAL_HARD_LIMIT;
       if (isAutoassociator) {
-        transferFunctionType = containsOutputZero ? TransferFunctionType.HARD_LIMIT : TransferFunctionType.SYMMETRICAL_HARD_LIMIT;
+        transferFunctionType = containsZero ? TransferFunctionType.HARD_LIMIT : TransferFunctionType.SYMMETRICAL_HARD_LIMIT;
       } else {
         transferFunctionType = TransferFunctionType.LINEAR;
       }
     }
     this.transferFunctionType = transferFunctionType;
-
     DoubleUnaryOperator transferFunction = TransferFunctionFactory.getInstance().getTransferFunction(transferFunctionType);
-    BasicNeuron[] neurons = Stream.generate(() -> new BasicNeuron(transferFunction)).limit(outputs[0].length).toArray(BasicNeuron[]::new);
-    Stream.of(neurons).forEach(neuron -> { double[] weights = new double[inputs[0].length];
+
+    BasicNeuron[] neurons = Stream.generate(() -> new BasicNeuron(transferFunction)).limit(outputsCount).toArray(BasicNeuron[]::new);
+
+    Stream.of(neurons).forEach(neuron -> { double[] weights = new double[inputsCount];
                                            Arrays.fill(weights, 0);
                                            neuron.setWeights(weights); });
     return neurons;
   }
 
-  private void adjustNeurons(double[][] weights) {
-    if (hasBias) {
-      for (int i = 0; i < weights.length; i++) {
-        double[] weightsWithoutBias = new double[weights[i].length - 1];
-        System.arraycopy(weights[i], 0, weightsWithoutBias, 0, weights[i].length - 1);
-        neurons[i].setWeights(weightsWithoutBias);
-        neurons[i].setBias(weights[i][weights[i].length - 1]);
-      }
-      ffLayer.adjust(neurons);
-      return;
+  private double[][] addBias(double[][] weights, double[] bias) {
+    double[][] inputsWithBias = new double[weights.length][];
+    for (int i = 0; i < inputsWithBias.length; i++) {
+      double[] inputWithBias = new double[weights[i].length + 1];
+      System.arraycopy(weights[i], 0, inputWithBias, 0, weights[i].length);
+      inputWithBias[inputWithBias.length - 1] = bias[i];
+      inputsWithBias[i] = inputWithBias;
     }
-
-    for (int i = 0; i < weights.length; i++) {
-      neurons[i].setWeights(weights[i]);
-    }
-    ffLayer.adjust(neurons);
+    return inputsWithBias;
   }
 
-  private double[][] applyHebbianRule(double[][] inputs, double[][] outputs) {
-    return Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), inputs);
+  private double[][] calculateBinaryWeights(double[][] binaryInputs, double[][] binaryOutputs) {
+    double[][] bipolarInputs = convertBinaryToBipolar(binaryInputs);
+    double[][] bipolarOutputs = convertBinaryToBipolar(binaryOutputs);
+    double[][] bipolarWeights = calculateWeights(bipolarInputs, bipolarOutputs, checkForOrthogonality(bipolarInputs));
+
+    double[][] binaryWeights = Calculator.multiplyMatrix(bipolarWeights, 2);
+
+    double[] binaryBias = new double[bipolarWeights.length];
+    double[][] negativeBipolarWeights = Calculator.multiplyMatrix(bipolarWeights, -1);
+    for (int i = 0; i < negativeBipolarWeights.length; i++) {
+      binaryBias[i] = Calculator.roundDouble(DoubleStream.of(negativeBipolarWeights[i]).sum());
+    }
+
+    double[][] binaryWeightsWithBias = addBias(binaryWeights, binaryBias);
+    hasBias = true;
+
+    return binaryWeightsWithBias;
+  }
+
+  private double[][] convertBinaryToBipolar(double[][] binaryData) {
+    double[][] bipolarData = new double[binaryData.length][];
+    for (int i = 0; i < bipolarData.length; i++) {
+      bipolarData[i] = new double[binaryData[i].length];
+      for (int j = 0; j < bipolarData[i].length; j++) {
+        if(binaryData[i][j] == 1) {
+          bipolarData[i][j] = 1;
+        } else {
+          bipolarData[i][j] = -1;
+        }
+      }
+    }
+    return bipolarData;
   }
 
   private boolean checkForOrthogonality(double[][] inputs) {
@@ -216,75 +212,41 @@ public final class HebbLearningRule implements LearningRule {
     return true;
   }
 
-  private void addBias() {
-    double[][] inputsWithBias = new double[inputs.length][];
-    for (int i = 0; i < inputsWithBias.length; i++) {
-      double[] inputWithBias = new double[inputs[i].length + 1];
-      System.arraycopy(inputs[i], 0, inputWithBias, 0, inputs[i].length);
-      inputWithBias[inputWithBias.length - 1] = 1;
-      inputsWithBias[i] = inputWithBias;
+  private double[][] calculateWeights(double[][] inputs, double[][] outputs, boolean isHebbianRuleApplicable) {
+    double[][] weights = null;
+    if (isHebbianRuleApplicable) {
+      weights = applyHebbianRule(inputs, outputs);
+    } else {
+      if (inputs.length == inputs[0].length) {
+        weights = Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), Calculator.getInverseMatrix(inputs));
+      } else {
+        if (inputs.length < inputs[0].length) {
+          weights = Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), Calculator.getLeftPseudoinverseMatrix(Calculator.transposeMatrix(inputs)));
+        } else {
+          weights = Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), Calculator.getRightPseudoinverseMatrix(Calculator.transposeMatrix(inputs)));
+        }
+      }
     }
-    inputs = inputsWithBias;
+    return weights;
   }
 
-  private double[][] convertBipolarToBinaryWeights() {
-    double[][] bipolarInputs = new double[inputs.length][];
-    for (int i = 0; i < bipolarInputs.length; i++) {
-      bipolarInputs[i] = new double[inputs[i].length];
-      for (int j = 0; j < bipolarInputs[i].length; j++) {
-        if(inputs[i][j] == 1) {
-          bipolarInputs[i][j] = 1;
-        } else {
-          bipolarInputs[i][j] = -1;
-        }
+  private double[][] applyHebbianRule(double[][] inputs, double[][] outputs) {
+    return Calculator.multiplyMatrices(Calculator.transposeMatrix(outputs), inputs);
+  }
+
+  private void adjustNeurons(double[][] weights) {
+    if (hasBias) {
+      for (int i = 0; i < weights.length; i++) {
+        double[] weightsWithoutBias = new double[weights[i].length - 1];
+        System.arraycopy(weights[i], 0, weightsWithoutBias, 0, weights[i].length - 1);
+        neurons[i].setWeights(weightsWithoutBias);
+        neurons[i].setBias(weights[i][weights[i].length - 1]);
       }
+      return;
     }
 
-    double[][] bipolarOutputs = new double[outputs.length][];
-    for (int i = 0; i < bipolarOutputs.length; i++) {
-      bipolarOutputs[i] = new double[outputs[i].length];
-      for (int j = 0; j < bipolarOutputs[i].length; j++) {
-        if(outputs[i][j] == 1) {
-          bipolarOutputs[i][j] = 1;
-        } else {
-          bipolarOutputs[i][j] = -1;
-        }
-      }
+    for (int i = 0; i < weights.length; i++) {
+      neurons[i].setWeights(weights[i]);
     }
-
-    double[][] bipolarWeights = null;
-    if (checkForOrthogonality(bipolarInputs)) {
-      bipolarWeights = applyHebbianRule(bipolarInputs, bipolarOutputs);
-    } else {
-      if (bipolarInputs.length == bipolarInputs[0].length) {
-        bipolarWeights = Calculator.multiplyMatrices(Calculator.transposeMatrix(bipolarOutputs), Calculator.getInverseMatrix(bipolarInputs));
-      } else {
-        if (bipolarInputs.length < bipolarInputs[0].length) {
-          bipolarWeights = Calculator.multiplyMatrices(Calculator.transposeMatrix(bipolarOutputs), Calculator.getLeftPseudoinverseMatrix(Calculator.transposeMatrix(bipolarInputs)));
-        } else {
-          bipolarWeights = Calculator.multiplyMatrices(Calculator.transposeMatrix(bipolarOutputs), Calculator.getRightPseudoinverseMatrix(Calculator.transposeMatrix(bipolarInputs)));
-        }
-      }
-    }
-
-    double[][] binaryWeights = Calculator.multiplyMatrix(bipolarWeights, 2);
-    double[] binaryBias = new double[bipolarWeights.length];
-    bipolarWeights = Calculator.multiplyMatrix(bipolarWeights, -1);
-    for (int i = 0; i < bipolarWeights.length; i++) {
-      binaryBias[i] = Calculator.roundDouble(DoubleStream.of(bipolarWeights[i]).sum());
-    }
-
-    double[][] result = new double[binaryWeights.length][];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = new double[binaryWeights[i].length + 1];
-      for (int j = 0; j < result[i].length - 1; j++) {
-        result[i][j] = binaryWeights[i][j];
-      }
-      result[i][result[i].length - 1] = binaryBias[i];
-    }
-
-    hasBias = true;
-
-    return result;
   }
 }

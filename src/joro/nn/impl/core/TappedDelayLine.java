@@ -8,7 +8,8 @@ public final class TappedDelayLine implements Delay {
 
   public TappedDelayLine(int timeSteps) {
     if (timeSteps < 1) {
-      throw new IllegalArgumentException("The time steps for delay should be at least 1. Current value: " + timeSteps);
+      throw new IllegalArgumentException("The time steps value for delay should be at least 1.\n" + 
+                                         "Time steps: " + timeSteps);
     }
 
     this.timeSteps = timeSteps;
@@ -17,16 +18,12 @@ public final class TappedDelayLine implements Delay {
 
   @Override
   public double[] delayInput(double input) {
-    stackNewInput(input);
-    return inputs;
-  }
-
-  private void stackNewInput(double input) {
     double[] newInputs = new double[timeSteps];
     newInputs[0] = input;
     if (timeSteps > 1) {
       System.arraycopy(inputs, 0, newInputs, 1, newInputs.length - 1);
     }
     inputs = newInputs;
+    return inputs;
   }
 }

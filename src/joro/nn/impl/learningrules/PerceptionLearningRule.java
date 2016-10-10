@@ -19,8 +19,8 @@ public final class PerceptionLearningRule implements LearningRule {
   public static final double INITIAL_BIAS = 1.0;
 
   private Layer ffLayer;
-  private BasicNeuron[] neurons;
   private List<Feed> calibrationFeed;
+  private BasicNeuron[] neurons;
 
   public PerceptionLearningRule(Layer ffLayer, List<Feed> calibrationFeed) {
     this.ffLayer = ffLayer;
@@ -49,38 +49,25 @@ public final class PerceptionLearningRule implements LearningRule {
         }
       }
     }
+
+    // Test area
     System.out.println("Converted in: " + stepsCounter + " steps.");
     for (int i = 0; i < neurons.length; i++) {
       System.out.println(neurons[i]);
     }
+    // End of test are
+
   }
 
   private BasicNeuron[] initNeurons() {
-    if (calibrationFeed.size() < 1) {
-      throw new IllegalArgumentException("The calibration tests cannot be zero. There should be at least one test for each output class.");
-    }
-
-    int inputCount = calibrationFeed.get(0).getInput().length;
-    int outputCount = calibrationFeed.get(0).getOutput().length;
+    int inputsCount = calibrationFeed.get(0).getInputs().length;
+    int outputsCount = calibrationFeed.get(0).getOutputs().length;
 
     boolean containsNegative = false;
     boolean containsZero = false;
 
     for (int i = 0; i < calibrationFeed.size(); i++) {
-      double[] input = calibrationFeed.get(i).getInput();
-      if (input.length != inputCount) {
-        throw new IllegalArgumentException("All input feed entries should contain the same number of elements.\n" + 
-                                           "The input feed entry on row " + i + " contains " + input.length + " elements, " + 
-                                            "which differs from the previous input feed entries " + inputCount + ".");
-      }
-
-      double[] output = calibrationFeed.get(i).getOutput();
-      if (output.length != outputCount) {
-        throw new IllegalArgumentException("All output feed entries should contain the same number of elements.\n" + 
-                                           "The output feed entry on row " + i + " contains " + output.length + " elements, " + 
-                                            "which differs from the previous output feed entries " + outputCount + ".");
-      }
-
+      double[] output = calibrationFeed.get(i).getOutputs();
       if (!containsNegative) {
         containsNegative = DoubleStream.of(output).anyMatch(value -> value == -1);
       }
@@ -89,40 +76,41 @@ public final class PerceptionLearningRule implements LearningRule {
       }
 
       if (containsNegative && containsZero) {
-        throw new IllegalArgumentException("The output values cannot contain both -1 and 0.\n" + 
+        throw new IllegalArgumentException("The output values cannot have both -1 and 0 elements.\n" + 
                                            "They should contain only:\n" + 
-                                           " - 0 and 1 for hard limit transfer function (hardlim)\n" + 
-                                           " - -1 and 1 for symetric hard limit transfer function (hardlims).");
+                                           " - 1 and 0 elements for hard limit transfer function (hardlim)\n" + 
+                                           " - 1 and -1 for symetric hard limit transfer function (hardlims).");
       }
     }
 
     DoubleUnaryOperator transferFunction = containsZero ? 
         TransferFunctionFactory.getInstance().getTransferFunction(TransferFunctionType.HARD_LIMIT) : 
         TransferFunctionFactory.getInstance().getTransferFunction(TransferFunctionType.SYMMETRICAL_HARD_LIMIT);
-    BasicNeuron[] neurons = Stream.generate(() -> new BasicNeuron(transferFunction)).limit(outputCount).toArray(BasicNeuron[]::new);
+
+    BasicNeuron[] neurons = Stream.generate(() -> new BasicNeuron(transferFunction)).limit(outputsCount).toArray(BasicNeuron[]::new);
 
     Stream.of(neurons).forEach(neuron -> { neuron.setBias(INITIAL_BIAS);
-                                           double[] weights = new double[inputCount];
+                                           double[] weights = new double[inputsCount];
                                            Arrays.fill(weights, INITIAL_WEIGHT);
                                            neuron.setWeights(weights); });
     return neurons;
   }
 
   private boolean calibrateForInput(Feed calibrationFeed) {
-    double[] layerOutput = ffLayer.activate(calibrationFeed.getInput());
-    if (Arrays.equals(calibrationFeed.getOutput(), layerOutput)) {
+    double[] layerOutput = ffLayer.activate(calibrationFeed.getInputs());
+    if (Arrays.equals(calibrationFeed.getOutputs(), layerOutput)) {
       return true;
     }
 
-    for (int i = 0; i < calibrationFeed.getOutput().length; i++) {
-      double error = calibrationFeed.getOutput()[i] - layerOutput[i];
+    for (int i = 0; i < calibrationFeed.getOutputs().length; i++) {
+      double error = calibrationFeed.getOutputs()[i] - layerOutput[i];
       if (error != 0) {
         BasicNeuron neuron = neurons[i];
         neuron.setBias(neuron.getBias() + error);
         if (error > 0) {
-          neuron.setWeights(Calculator.addDoubleArrays(neuron.getWeights(), calibrationFeed.getInput()));
+          neuron.setWeights(Calculator.addDoubleArrays(neuron.getWeights(), calibrationFeed.getInputs()));
         } else {
-          neuron.setWeights(Calculator.subtractDoubleArrays(neuron.getWeights(), calibrationFeed.getInput()));
+          neuron.setWeights(Calculator.subtractDoubleArrays(neuron.getWeights(), calibrationFeed.getInputs()));
         }
       }
     }

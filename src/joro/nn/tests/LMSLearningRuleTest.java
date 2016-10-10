@@ -11,23 +11,23 @@ import joro.nn.impl.utils.CalibrationFeedGenerator;
 
 public class LMSLearningRuleTest {
   public static void main(String[] args) {
-    List<Feed> tests_fruits_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/01_fruits_problem.txt");
-    Network myNN_fruits_problem = new ADALINE(tests_fruits_problem);
-    myNN_fruits_problem.learn();
-
-    double[] input = new double[] { 1, -1, -1 };
-    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_fruits_problem.process(input)));
-
-    input = new double[] { 1, 1, -1 };
-    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_fruits_problem.process(input)));
-
-    System.out.println("-------------------------------------------");
-
+//    List<Feed> tests_fruits_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/01_fruits_problem.txt");
+//    Network myNN_fruits_problem = new ADALINE(tests_fruits_problem);
+//    myNN_fruits_problem.learn();
+//
+//    double[] input = new double[] { 1, -1, -1 };
+//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_fruits_problem.process(input)));
+//
+//    input = new double[] { 1, 1, -1 };
+//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_fruits_problem.process(input)));
+//
+//    System.out.println("-------------------------------------------");
+//
 //    List<Feed> tests_unknown02_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/02_unknown_problem.txt");
 //    Network myNN_unknown02_problem = new ADALINE(tests_unknown02_problem);
 //    myNN_unknown02_problem.learn();
 //
-//    input = new double[] { 1, 1 };
+//    double[] input = new double[] { 1, 1 };
 //    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown02_problem.process(input)));
 //
 //    input = new double[] { -1, -1 };
@@ -37,46 +37,46 @@ public class LMSLearningRuleTest {
 //    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown02_problem.process(input)));
 //
 //    System.out.println("-------------------------------------------");
-
-    List<Feed> tests_unknown03_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/03_unknown_problem.txt");
-    Network myNN_unknown03_problem = new ADALINE(tests_unknown03_problem);
-    myNN_unknown03_problem.learn();
-  
-    input = new double[] { 1, 1 };
-    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown03_problem.process(input)));
-  
-    input = new double[] { 1, -1 };
-    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown03_problem.process(input)));
+//
+//    List<Feed> tests_unknown03_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/03_unknown_problem.txt");
+//    Network myNN_unknown03_problem = new ADALINE(tests_unknown03_problem);
+//    myNN_unknown03_problem.learn();
+//  
+//    double[] input = new double[] { 1, 1 };
+//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown03_problem.process(input)));
+//  
+//    input = new double[] { 1, -1 };
+//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown03_problem.process(input)));
 //
 //    System.out.println("-------------------------------------------");
 //
-//    List<Feed> tests_unknown04_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/04_unknown_problem.txt");
-//    Network myNN_unknown04_problem = new ADALINE(tests_unknown04_problem);
-//    myNN_unknown04_problem.learn();
-//  
-//    input = new double[] { 1, 1 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//  
-//    input = new double[] { 1, 2 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//  
-//    input = new double[] { 2, -1 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//
-//    input = new double[] { 2, 0 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//
-//    input = new double[] { -1, 2 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//
-//    input = new double[] { -2, 1 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//
-//    input = new double[] { -1, -1 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
-//
-//    input = new double[] { -2, -2 };
-//    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+    List<Feed> tests_unknown04_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/04_unknown_problem.txt");
+    Network myNN_unknown04_problem = new ADALINE(tests_unknown04_problem);
+    myNN_unknown04_problem.learn();
+  
+    double[] input = new double[] { 1, 1 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+  
+    input = new double[] { 1, 2 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+  
+    input = new double[] { 2, -1 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+
+    input = new double[] { 2, 0 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+
+    input = new double[] { -1, 2 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+
+    input = new double[] { -2, 1 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+
+    input = new double[] { -1, -1 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
+
+    input = new double[] { -2, -2 };
+    System.out.println(Arrays.toString(input) + " --> " + Arrays.toString(myNN_unknown04_problem.process(input)));
 //
 //    System.out.println("-------------------------------------------");
 //

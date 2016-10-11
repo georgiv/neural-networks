@@ -1,7 +1,11 @@
 package joro.nn.tests;
 
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.List;
+
+import org.junit.Test;
 
 import joro.nn.api.Network;
 import joro.nn.impl.core.Feed;
@@ -10,6 +14,43 @@ import joro.nn.impl.networks.AdaptiveFilter;
 import joro.nn.impl.utils.CalibrationFeedGenerator;
 
 public class LMSLearningRuleTest {
+
+  @Test
+  public void testAll() {
+    testSingleAdalineProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/01_fruits_problem.txt"), 0.001);
+    System.out.println("-------------------------------------------");
+    
+  }
+
+  private void testSingleAdalineProblem(List<Feed> tests, double acceptableError) {
+    Network nn = new ADALINE(tests);
+    testSingleProblem(nn, tests, acceptableError);
+  }
+
+  private void testSingleAdaptiveFilterProblem(List<Feed> tests, double acceptableError) {
+    Network nn = new AdaptiveFilter(tests);
+    testSingleProblem(nn, tests, acceptableError);
+  }
+
+  private void testSingleProblem(Network nn, List<Feed> tests, double acceptableError) {
+    nn.learn();
+
+    tests.stream().forEach(test -> { double[] inputs = test.getInputs();
+                                     double[] outputs = test.getOutputs();
+                                     double[] result = nn.process(test.getInputs());
+                                     assertTrue(compareDoubleArraysWithAcceptableError(outputs, result, acceptableError));
+                                     System.out.println("inputs: " + Arrays.toString(inputs) + " --> outputs: " + Arrays.toString(outputs)); });
+  }
+
+  private boolean compareDoubleArraysWithAcceptableError(double[] target, double[] result, double acceptableError) {
+    for (int i = 0; i < result.length; i++) {
+      if (!(Math.abs(target[i] - result[i]) <= acceptableError)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static void main(String[] args) {
 //    List<Feed> tests_fruits_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/01_fruits_problem.txt");
 //    Network myNN_fruits_problem = new ADALINE(tests_fruits_problem);

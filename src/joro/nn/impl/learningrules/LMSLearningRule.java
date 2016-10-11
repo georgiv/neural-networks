@@ -81,7 +81,7 @@ public final class LMSLearningRule implements LearningRule {
       }
 
       if (learningRate <= minLearningRate) {
-        acceptableError = Calculator.roundDouble(acceptableError + 0.01);
+        acceptableError = Calculator.roundDouble(acceptableError + 0.001);
         learningRate = maxStableLearningRate;
         stepsCounter = 0;
         successfulIterationsCounter = 0;

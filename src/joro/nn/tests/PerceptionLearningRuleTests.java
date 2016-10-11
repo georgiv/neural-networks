@@ -16,48 +16,23 @@ public class PerceptionLearningRuleTests {
 
   @Test
   public void testAll() {
-    List<Feed> tests01 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/01_and_problem.txt");
-    testSingleProblem(tests01);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/01_and_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests02 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/02_fruits_problem.txt");
-    testSingleProblem(tests02);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/02_fruits_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests03 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/03_unknown_problem.txt");
-    testSingleProblem(tests03);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/03_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests04 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/04_unknown_problem.txt");
-    testSingleProblem(tests04);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/04_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests05 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/05_unknown_problem.txt");
-    testSingleProblem(tests05);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/05_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests06 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/06_unknown_problem.txt");
-    testSingleProblem(tests06);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/06_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests07 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/07_unknown_problem.txt");
-    testSingleProblem(tests07);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/07_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests08 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/08_unknown_problem.txt");
-    testSingleProblem(tests08);
-
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/08_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests09 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/09_unknown_problem.txt");
-    testSingleProblem(tests09);
+    testSingleProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/perception/09_unknown_problem.txt"));
   }
 
   private void testSingleProblem(List<Feed> tests) {

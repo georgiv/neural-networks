@@ -18,65 +18,29 @@ public class HebbLearningRuleTests {
 
   @Test
   public void testAll() {
-    List<Feed> tests01 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/01_unknown_problem.txt");
-    testSingleLinearAssociatorProblem(tests01);
-
+    testSingleLinearAssociatorProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/01_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests02 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/02_fruits_problem.txt");
-    testSingleLinearAssociatorProblem(tests02);
-
+    testSingleLinearAssociatorProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/02_fruits_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests03 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/03_digits_problem.txt");
-    testSinglePatternRecognitionProblem(tests03, 5);
-
+    testSinglePatternRecognitionProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/03_digits_problem.txt"), 5);
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests04 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/04_unknown_problem.txt");
-    testSingleLinearAssociatorProblem(tests04);
-
+    testSingleLinearAssociatorProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/04_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests05 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/05_tetris_problem.txt");
-    testSinglePatternRecognitionProblem(tests05, 2);
-
+    testSinglePatternRecognitionProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/05_tetris_problem.txt"), 2);
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests06 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/06_unknown_problem.txt");
-    testSingleLinearAssociatorProblem(tests06);
-
+    testSingleLinearAssociatorProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/06_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests07 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/07_unknown_problem.txt");
-    testSinglePerceptionProblem(tests07);
-
+    testSinglePerceptionProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/07_unknown_problem.txt"));
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests08 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/08_unknown_problem.txt");
-    testSinglePerceptionProblem(tests08);
-//
+    testSinglePerceptionProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/08_unknown_problem.txt"));
+    System.out.println("-------------------------------------------");
+//    testSingleLinearAssociatorProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/09_unknown_problem.txt"));
 //    System.out.println("-------------------------------------------");
-//
-//    List<Feed> tests09 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/09_unknown_problem.txt");
-//    testSingleLinearAssociatorProblem(tests09);
-//
+//    testSingleLinearAssociatorProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/10_unknown_problem.txt"));
 //    System.out.println("-------------------------------------------");
-//
-//    List<Feed> tests10 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/10_unknown_problem.txt");
-//    testSingleLinearAssociatorProblem(tests10);
-
+    testSinglePatternRecognitionProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/11_digits2_problem.txt"), 5);
     System.out.println("-------------------------------------------");
-
-    List<Feed> tests11 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/11_digits2_problem.txt");
-    testSinglePatternRecognitionProblem(tests11, 5);
-
-    System.out.println("-------------------------------------------");
-
-    List<Feed> tests12 = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/12_tetris2_problem.txt");
-    testSinglePatternRecognitionProblem(tests12, 2);
-
-    System.out.println("-------------------------------------------");
+    testSinglePatternRecognitionProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/hebb/12_tetris2_problem.txt"), 2);
   }
 
   private void testSingleLinearAssociatorProblem(List<Feed> tests) {

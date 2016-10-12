@@ -41,7 +41,7 @@ public class PerceptionLearningRuleTests {
 
     tests.stream().forEach(test -> { double[] inputs = test.getInputs();
                                      double[] outputs = test.getOutputs();
-                                     double[] result = nn.process(test.getInputs());
+                                     double[] result = nn.process(inputs);
                                      assertTrue(Arrays.equals(outputs, result));
                                      System.out.println("inputs: " + Arrays.toString(inputs) + " --> outputs: " + Arrays.toString(outputs)); });
   }

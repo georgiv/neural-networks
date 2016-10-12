@@ -5,6 +5,8 @@ import java.math.RoundingMode;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import Jama.Matrix;
+
 public final class Calculator {
   public static final int DEFAULT_SCALE = 4;
 
@@ -262,29 +264,32 @@ public final class Calculator {
       throw new IllegalArgumentException("Determinant can be calculated only for square matrix with minimum size 2.");
     }
 
-    if (matrix.length == 2) {
-      BigDecimal a = new BigDecimal(matrix[0][0]);
-      BigDecimal b = new BigDecimal(matrix[0][1]);
-      BigDecimal c = new BigDecimal(matrix[1][0]);
-      BigDecimal d = new BigDecimal(matrix[1][1]);
-      return a.multiply(d).subtract(b.multiply(c)).setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).doubleValue();
-    }
+//    if (matrix.length == 2) {
+//      BigDecimal a = new BigDecimal(matrix[0][0]);
+//      BigDecimal b = new BigDecimal(matrix[0][1]);
+//      BigDecimal c = new BigDecimal(matrix[1][0]);
+//      BigDecimal d = new BigDecimal(matrix[1][1]);
+//      return a.multiply(d).subtract(b.multiply(c)).setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).doubleValue();
+//    }
+//
+//    BigDecimal multiplicatorA = new BigDecimal(1);
+//
+//    BigDecimal result = new BigDecimal(0);
+//    for (int i = 0; i < matrix[0].length; i++) {
+//      BigDecimal multiplicatorB = new BigDecimal(matrix[0][i]);
+//
+//      double[][] subMatrix = getSubSquareMatrix(matrix, 0, i);
+//      double submatrixDeterminant = calculateMatrixDeterminant(subMatrix);
+//      BigDecimal multiplicatorC = new BigDecimal(submatrixDeterminant);
+//
+//      result = result.add(multiplicatorA.multiply(multiplicatorB).multiply(multiplicatorC).setScale(DEFAULT_SCALE, RoundingMode.HALF_UP));
+//
+//      multiplicatorA = multiplicatorA.multiply(new BigDecimal(-1));
+//    }
+//    return result.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).doubleValue();
 
-    BigDecimal multiplicatorA = new BigDecimal(1);
-
-    BigDecimal result = new BigDecimal(0);
-    for (int i = 0; i < matrix[0].length; i++) {
-      BigDecimal multiplicatorB = new BigDecimal(matrix[0][i]);
-
-      double[][] subMatrix = getSubSquareMatrix(matrix, 0, i);
-      double submatrixDeterminant = calculateMatrixDeterminant(subMatrix);
-      BigDecimal multiplicatorC = new BigDecimal(submatrixDeterminant);
-
-      result = result.add(multiplicatorA.multiply(multiplicatorB).multiply(multiplicatorC).setScale(DEFAULT_SCALE, RoundingMode.HALF_UP));
-
-      multiplicatorA = multiplicatorA.multiply(new BigDecimal(-1));
-    }
-    return result.setScale(DEFAULT_SCALE, RoundingMode.HALF_UP).doubleValue();
+    return roundDouble(new Matrix(matrix).det());
+    
   }
 
   public static double[][] getInverseMatrix(double[][] matrix) {

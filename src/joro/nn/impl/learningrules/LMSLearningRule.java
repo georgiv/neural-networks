@@ -1,5 +1,7 @@
 package joro.nn.impl.learningrules;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.DoubleUnaryOperator;
@@ -37,20 +39,20 @@ public final class LMSLearningRule implements LearningRule {
     neurons = initNeurons();
     ffLayer.adjust(neurons);
 
-//    try {
-//      double[][] weights = new double[neurons.length][];
-//      double[][] transposedOutputs = Calculator.transposeMatrix(outputs);
-//      for (int i = 0; i < transposedOutputs.length; i++) {
-//        weights[i] = calculateMinimumPoint(inputs, transposedOutputs[i]);
-//      }
-//      adjustNeurons(weights);
-//      for (int i = 0; i < neurons.length; i++) {
-//        System.out.println(neurons[i]);
-//      }
-//      return;
-//    } catch (IllegalArgumentException illegalArgEx) {
-//      System.err.println("There's no unique min point - the meaned square error is not applicable. Trying with the LMS algorithm...");
-//    }
+    try {
+      double[][] weights = new double[neurons.length][];
+      double[][] transposedOutputs = Calculator.transposeMatrix(outputs);
+      for (int i = 0; i < transposedOutputs.length; i++) {
+        weights[i] = calculateMinimumPoint(inputs, transposedOutputs[i]);
+      }
+      adjustNeurons(weights);
+      for (int i = 0; i < neurons.length; i++) {
+        System.out.println(neurons[i]);
+      }
+      return;
+    } catch (IllegalArgumentException illegalArgEx) {
+      System.err.println("There's no unique min point - the meaned square error is not applicable. Trying with the LMS algorithm...");
+    }
 
     double maxStableLearningRate = Calculator.roundDouble(calculateMaxStableLearningRate(inputs), 2);
     double minLearningRate = Calculator.roundDouble(maxStableLearningRate / 10, 2);
@@ -74,7 +76,7 @@ public final class LMSLearningRule implements LearningRule {
             break;
           }
         } catch (IllegalArgumentException e) {
-          System.out.println("IAE on step " + stepsCounter + " --> learning rate: " + learningRate + " , acceptable error: " + acceptableError);
+          System.out.println("IAE on step " + stepsCounter + " --> learning rate: " + learningRate + " , acceptable error: " + acceptableError + ". Error message: " + e.getMessage());
           stepsCounter++;
           successfulIterationsCounter = 0;
         }

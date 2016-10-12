@@ -889,7 +889,8 @@ public final class CalculatorTest {
       new double[] { 4.111, -2.111, 5.111 },
       new double[] { 2.111, 8.111, 7.111 }
     };
-    target = -323.5622;
+    //target = -323.5622;
+    target = -323.5624;
     assertTrue(target == Calculator.calculateMatrixDeterminant(matrix));
   }
 

@@ -1,11 +1,13 @@
 Backlog:
-1. Implement a check for linear separability that can be used by the perception network
+1. Implement check for linear separability that can be used by the perception network
 2. Research for better ways to optimize the Hebb rule than using the pseudoinverse rule - for example the delta rule
-3. Implement a positive learning rate (alpha) and a decay term (gamma) which will limit the weight matrix and prevent it from holding big values
-4. Implement a check for the linear associator which will be able to determine which is the closest pattern to the input. Hamming distance?
+3. Implement positive learning rate (alpha) and decay term (gamma) which will limit the weight matrix and prevent it from holding big values
+4. Implement check for the linear associator which will be able to determine which is the closest pattern to the input. Hamming distance?
 5. The Hebb rule does not work when the input vectors are not orthogonal and the input vectors contain values different than -1 and 1 (tests 07 - 10).
 6. Write own method for eigenvalues calculation instead of using the Jama library.
-7. LMS: implement algorithm which will take into consideration the probabilities of input vector occurrences.
+7. Implement algorithm for the LMS rule which will take into consideration the probabilities of input vector occurrences.
+8. The LMS rule is currently working with the limits of the double primitive type. Maybe substitute double with BigDecimal?
+9. Implement own LU matrix decomposition matrix for the purposes of calculating matrix determinants instead of using Jama.
 
 ----------------------------------------------
 Library:
@@ -40,7 +42,7 @@ The key characteristic of the single-layer perceptron is that it creates linear 
 A single-neuron perceptron can classify input vectors into two categories. With multiple-neuron perception there are a total of Math.pow(2, S) possible categories, where S is the number of neurons.
 
 Hamming Network:
-It was designed explicitly to solve binary pattern recognition problems (where each element of the input vector has only two possible values â€” in our example 1 or ). It uses both feedforward and recurrent (feedback) layers, as the number of neurons in both layers is the same.
+It was designed explicitly to solve binary pattern recognition problems (where each element of the input vector has only two possible values Ã¢â‚¬â€� in our example 1 or ). It uses both feedforward and recurrent (feedback) layers, as the number of neurons in both layers is the same.
 There is one neuron in the recurrent layer for each prototype pattern. When the recurrent layer converges, there will be only one neuron with nonzero output.
  - Feedforward Layer:
    The feedforward layer performs a correlation, or inner product, between each of the prototype patterns and the input pattern.
@@ -49,7 +51,7 @@ There is one neuron in the recurrent layer for each prototype pattern. When the 
    By adding the number of elements in the input vector to the inner product we guarantee that the outputs of the feedforward layer can never be negative. This is required for proper operation of the recurrent layer.
    This network is called the Hamming network because the neuron in the feedforward layer with the largest output will correspond to the prototype pattern that is closest in Hamming distance to the input pattern. (The Hamming distance between two vectors is equal to the number of elements that are different. It is defined only for binary vectors.) We leave it to the reader to show that the outputs of the feedforward layer are equal to twice the number of elements in the input vector minus twice the Hamming distances from the prototype patterns to the input pattern.
  - Recurrent Layer:
-   The recurrent layer of the Hamming network is what is known as a â€œcompetitiveâ€� layer - the neurons compete with each other to determine a winner. After the competition, only one neuron will have a nonzero output.
+   The recurrent layer of the Hamming network is what is known as a Ã¢â‚¬Å“competitiveÃ¢â‚¬ï¿½ layer - the neurons compete with each other to determine a winner. After the competition, only one neuron will have a nonzero output.
    Since the outputs of successive iterations produce the same result, the network has converged.
 
 Hopfield Network:

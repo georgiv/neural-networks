@@ -1,10 +1,10 @@
 package joro.nn.impl.learningrules;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Stream;
 
@@ -19,6 +19,7 @@ import joro.nn.impl.utils.Calculator;
 public final class BackpropagationLearningRule implements LearningRule {
   private Layer[] ffLayers;
   private List<Feed> calibrationFeed;
+  private List<Feed> calibrationFeedCopy;
   private BasicNeuron[] neurons;
   private double[][] inputs;
   private double[][] outputs;
@@ -28,11 +29,28 @@ public final class BackpropagationLearningRule implements LearningRule {
   public BackpropagationLearningRule(Layer[] ffLayers, List<Feed> calibrationFeed) {
     this.ffLayers = ffLayers;
     this.calibrationFeed = calibrationFeed;
+    calibrationFeedCopy = new ArrayList<>();
   }
 
   @Override
   public void converge() {
     initNeurons();
+//    Feed calibrationFeed = new Feed();
+//    calibrationFeed.setInputs(new double[] { 1 });
+//    calibrationFeed.setOutputs(new double[] { 1.7071 });
+//    calibrateForInput(calibrationFeed);
+
+    int stepsCounter = 0;
+    Collections.addAll(calibrationFeedCopy, calibrationFeed.toArray(new Feed[0]));
+    while (true) {
+      stepsCounter++;
+      System.out.println("Step: " + stepsCounter);
+      calibrateForInput(pickCalibrationFeed());
+
+      if (calibrationFeedCopy.size() == 0) {
+        Collections.addAll(calibrationFeedCopy, calibrationFeed.toArray(new Feed[0]));
+      }
+    }
   }
 
   private void initNeurons() {
@@ -50,29 +68,29 @@ public final class BackpropagationLearningRule implements LearningRule {
     DoubleUnaryOperator hiddenLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(TransferFunctionType.LOG_SIGMOID);
     BasicNeuron[] hiddenLayerNeurons = Stream.generate(() -> new BasicNeuron(hiddenLayerTransferFunction)).limit(2).toArray(BasicNeuron[]::new);
     Stream.of(hiddenLayerNeurons).forEach(neuron -> { neuron.setBias(generateRandomWeight());
-                                                      neuron.setWeights(generateRandomWeights(2)); });
+                                                      neuron.setWeights(generateRandomWeights(inputCount)); });
     ffLayers[0].adjust(hiddenLayerNeurons);
-    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
-       new BasicNeuron(hiddenLayerTransferFunction),
-       new BasicNeuron(hiddenLayerTransferFunction)
-    };
-    testhiddenLayerNeurons[0].setWeights(new double[] { -0.27 });
-    testhiddenLayerNeurons[0].setBias(-0.48);
-    testhiddenLayerNeurons[1].setWeights(new double[] { -0.41 });
-    testhiddenLayerNeurons[1].setBias(-0.13);
-    ffLayers[0].adjust(testhiddenLayerNeurons);
+//    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
+//       new BasicNeuron(hiddenLayerTransferFunction),
+//       new BasicNeuron(hiddenLayerTransferFunction)
+//    };
+//    testhiddenLayerNeurons[0].setWeights(new double[] { -0.27 });
+//    testhiddenLayerNeurons[0].setBias(-0.48);
+//    testhiddenLayerNeurons[1].setWeights(new double[] { -0.41 });
+//    testhiddenLayerNeurons[1].setBias(-0.13);
+//    ffLayers[0].adjust(testhiddenLayerNeurons);
 
     DoubleUnaryOperator outputLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(TransferFunctionType.LINEAR);
     BasicNeuron[] outputLayerNeurons = Stream.generate(() -> new BasicNeuron(outputLayerTransferFunction)).limit(outputCount).toArray(BasicNeuron[]::new);
     Stream.of(outputLayerNeurons).forEach(neuron -> { neuron.setBias(generateRandomWeight());
                                                       neuron.setWeights(generateRandomWeights(hiddenLayerNeurons.length)); });
     ffLayers[1].adjust(outputLayerNeurons);
-    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
-        new BasicNeuron(outputLayerTransferFunction)
-    };
-    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
-    testOutputLayerNeurons[0].setBias(0.48);
-    ffLayers[1].adjust(testOutputLayerNeurons);
+//    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
+//        new BasicNeuron(outputLayerTransferFunction)
+//    };
+//    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
+//    testOutputLayerNeurons[0].setBias(0.48);
+//    ffLayers[1].adjust(testOutputLayerNeurons);
   }
 
   private double[] generateRandomWeights(int weightsCount) {
@@ -87,6 +105,11 @@ public final class BackpropagationLearningRule implements LearningRule {
     return Calculator.roundDouble(ThreadLocalRandom.current().nextDouble(-0.9, 1), 2);
   }
 
+  private Feed pickCalibrationFeed() {
+    int index = ThreadLocalRandom.current().nextInt(0, calibrationFeedCopy.size());
+    return calibrationFeedCopy.remove(index);
+  }
+
   private boolean calibrateForInput(Feed calibrationFeed) {
     double[] output = ffLayers[0].activate(calibrationFeed.getInputs());
     for (int i = 1; i < ffLayers.length; i++) {
@@ -98,12 +121,31 @@ public final class BackpropagationLearningRule implements LearningRule {
 
     System.out.println("Expected output: " + Arrays.toString(calibrationFeed.getOutputs()));
     System.out.println("Actual output: " + Arrays.toString(output));
+
+    for (int i = 0; i < calibrationFeed.getOutputs().length; i++) {
+      double error = calibrationFeed.getOutputs()[i] - output[i];
+      if (error != 0) {
+        System.out.println("Error: " + (calibrationFeed.getOutputs()[i] - output[i]));
+      }
+    }
     return false;
   }
 
   public static void main(String[] args) {
-    double p = 2;
-    double result = 1 + Math.sin(Math.PI * p / 4);
-    System.out.println(result);
+    List<Feed> myList = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      myList.add(new Feed());
+    }
+    System.out.println("List with size " + myList.size() + " created");
+    List<Feed> myListCopy = new ArrayList<>(myList.size());
+    System.out.println("Empty list created");
+    Collections.addAll(myListCopy, myList.toArray(new Feed[0]));
+    System.out.println("Copied list contains the same number of elements as the original? - " + (myList.size() == myListCopy.size()));
+    for (int i = 0; i < myList.size(); i++) {
+      myListCopy.remove(0);
+      System.out.println((i + 1) + " elements removed from the copy");
+      System.out.println("Original list size: " + myList.size());
+      System.out.println("Copy list size: " + myListCopy.size());
+    }
   }
 }

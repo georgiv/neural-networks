@@ -12,7 +12,7 @@ import joro.nn.impl.core.Feed;
 import joro.nn.impl.networks.Perception;
 import joro.nn.impl.utils.CalibrationFeedGenerator;
 
-public class PerceptionLearningRuleTests {
+public class PerceptionLearningRuleTest {
 
   @Test
   public void testAll() {

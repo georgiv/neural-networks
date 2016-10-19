@@ -14,7 +14,7 @@ import joro.nn.impl.networks.LinearAssociator;
 import joro.nn.impl.networks.Perception;
 import joro.nn.impl.utils.CalibrationFeedGenerator;
 
-public class HebbLearningRuleTests {
+public class HebbLearningRuleTest {
 
   @Test
   public void testAll() {

@@ -32,8 +32,8 @@ public class LMSLearningRuleTest {
     testSingleAdaptiveFilterProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/07_unknown_problem.txt"), 0.001);
     System.out.println("-------------------------------------------");
     testSingleAdaptiveFilterProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/07_unknown_problem.txt"), 0.001);
-    System.out.println("-------------------------------------------");
-    testSingleAdalineProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/08_lines_problem.txt"), 0); // NOT LINEARLY SEPARABLE?
+//    System.out.println("-------------------------------------------");
+//    testSingleAdalineProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/08_lines_problem.txt"), 0); // NOT LINEARLY SEPARABLE?
     System.out.println("-------------------------------------------");
     testSingleAdalineProblem(CalibrationFeedGenerator.generate("./learning_rule_test_inputs/lms/09_unknown_problem.txt"), 0);
     System.out.println("-------------------------------------------");

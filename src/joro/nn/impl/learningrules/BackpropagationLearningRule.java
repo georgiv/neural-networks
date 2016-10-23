@@ -30,6 +30,7 @@ public final class BackpropagationLearningRule implements LearningRule {
     this.ffLayers = ffLayers;
     this.calibrationFeed = calibrationFeed;
     calibrationFeedCopy = new ArrayList<>();
+    Collections.addAll(calibrationFeedCopy, calibrationFeed.toArray(new Feed[0]));
   }
 
   @Override
@@ -41,7 +42,6 @@ public final class BackpropagationLearningRule implements LearningRule {
 //    calibrateForInput(calibrationFeed);
 
     int stepsCounter = 0;
-    Collections.addAll(calibrationFeedCopy, calibrationFeed.toArray(new Feed[0]));
     while (true) {
       stepsCounter++;
       System.out.println("Step: " + stepsCounter);

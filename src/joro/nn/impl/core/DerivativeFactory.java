@@ -17,7 +17,7 @@ public final class DerivativeFactory {
     return INSTANCE;
   }
 
-  public DoubleUnaryOperator getTransferFunction(TransferFunctionType type) {
+  public DoubleUnaryOperator getDerivative(TransferFunctionType type) {
     DoubleUnaryOperator derivative = null;
 
     switch (type) {

@@ -37,7 +37,7 @@ public final class TransferFunctionFactory {
         break;
       case HYPERBOLIC_TANGENT_SIGMOID: transferFunction = i -> (Math.exp(i) - Math.exp(-i)) / (Math.exp(i) + Math.exp(-i)); //tansig
         break;
-      case COMPETITIVE: transferFunction = null; // TODO: implement compet
+      case COMPETITIVE: transferFunction = null; //TODO: implement compet
         break;
       default: throw new IllegalArgumentException("Unknow transfer function type: " + type);
     }

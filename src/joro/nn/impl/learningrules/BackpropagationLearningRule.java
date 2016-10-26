@@ -11,6 +11,7 @@ import java.util.stream.Stream;
 import joro.nn.api.Layer;
 import joro.nn.api.LearningRule;
 import joro.nn.impl.core.BasicNeuron;
+import joro.nn.impl.core.DerivativeFactory;
 import joro.nn.impl.core.Feed;
 import joro.nn.impl.core.TransferFunctionFactory;
 import joro.nn.impl.core.TransferFunctionType;
@@ -23,6 +24,7 @@ public final class BackpropagationLearningRule implements LearningRule {
   private BasicNeuron[] neurons;
   private double[][] inputs;
   private double[][] outputs;
+  private TransferFunctionType[] transferFunctions;
   //private double learningRate;
   //private double acceptableError;
 
@@ -65,7 +67,11 @@ public final class BackpropagationLearningRule implements LearningRule {
       outputs[i] = calibrationFeed.get(i).getOutputs();
     }
 
-    DoubleUnaryOperator hiddenLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(TransferFunctionType.LOG_SIGMOID);
+    transferFunctions = new TransferFunctionType[ffLayers.length];
+    transferFunctions[0] = TransferFunctionType.LOG_SIGMOID;
+    transferFunctions[1] = TransferFunctionType.LINEAR;
+
+    DoubleUnaryOperator hiddenLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(transferFunctions[0]);
     BasicNeuron[] hiddenLayerNeurons = Stream.generate(() -> new BasicNeuron(hiddenLayerTransferFunction)).limit(2).toArray(BasicNeuron[]::new);
     Stream.of(hiddenLayerNeurons).forEach(neuron -> { neuron.setBias(generateRandomWeight());
                                                       neuron.setWeights(generateRandomWeights(inputCount)); });
@@ -80,7 +86,7 @@ public final class BackpropagationLearningRule implements LearningRule {
 //    testhiddenLayerNeurons[1].setBias(-0.13);
 //    ffLayers[0].adjust(testhiddenLayerNeurons);
 
-    DoubleUnaryOperator outputLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(TransferFunctionType.LINEAR);
+    DoubleUnaryOperator outputLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(transferFunctions[1]);
     BasicNeuron[] outputLayerNeurons = Stream.generate(() -> new BasicNeuron(outputLayerTransferFunction)).limit(outputCount).toArray(BasicNeuron[]::new);
     Stream.of(outputLayerNeurons).forEach(neuron -> { neuron.setBias(generateRandomWeight());
                                                       neuron.setWeights(generateRandomWeights(hiddenLayerNeurons.length)); });
@@ -111,9 +117,12 @@ public final class BackpropagationLearningRule implements LearningRule {
   }
 
   private boolean calibrateForInput(Feed calibrationFeed) {
+    double[][] outputs = new double[ffLayers.length][];
     double[] output = ffLayers[0].activate(calibrationFeed.getInputs());
+    outputs[0] = output;
     for (int i = 1; i < ffLayers.length; i++) {
       output = ffLayers[i].activate(output);
+      outputs[i] = output;
     }
     if (Arrays.equals(calibrationFeed.getOutputs(), output)) {
       return true;
@@ -131,21 +140,44 @@ public final class BackpropagationLearningRule implements LearningRule {
     return false;
   }
 
+  private double[] calculateSensitives(double[][] outputs) {
+    double[][] sensitivities = new double[outputs.length][];
+
+    
+
+    
+
+    return null;
+  }
+
+  private double[] calculateLastLayerSensitivity(double error) {
+    double[] result = new double[ffLayers.length];
+
+    DoubleUnaryOperator derivative = DerivativeFactory.getInstance().getDerivative(transferFunctions[transferFunctions.length - 1]);
+
+    int neuronsCount = outputs[0].length;
+
+    double lastLayerSensitivity = -2 * derivative.applyAsDouble(0) * error;
+
+    return null;
+  }
+
+  private static double[][] getJacobianMatrix(int size, DoubleUnaryOperator derivative, double[] output) {
+    double[][] matrix = new double[size][size];
+    for (int i = 0; i < size; i++) {
+      matrix[i][i] = Calculator.roundDouble(derivative.applyAsDouble(output[i]));
+    }
+    return matrix;
+  }
+
   public static void main(String[] args) {
-    List<Feed> myList = new ArrayList<>();
-    for (int i = 0; i < 10; i++) {
-      myList.add(new Feed());
+    int size = 2;
+    DoubleUnaryOperator derivative = DerivativeFactory.getInstance().getDerivative(TransferFunctionType.LOG_SIGMOID);
+    double[] output = new double[] { 0.321, 0.368 };
+    double[][] result = getJacobianMatrix(size, derivative, output);
+    for (int i = 0; i < result.length; i++) {
+      System.out.println(Arrays.toString(result[i]));
     }
-    System.out.println("List with size " + myList.size() + " created");
-    List<Feed> myListCopy = new ArrayList<>(myList.size());
-    System.out.println("Empty list created");
-    Collections.addAll(myListCopy, myList.toArray(new Feed[0]));
-    System.out.println("Copied list contains the same number of elements as the original? - " + (myList.size() == myListCopy.size()));
-    for (int i = 0; i < myList.size(); i++) {
-      myListCopy.remove(0);
-      System.out.println((i + 1) + " elements removed from the copy");
-      System.out.println("Original list size: " + myList.size());
-      System.out.println("Copy list size: " + myListCopy.size());
-    }
+    
   }
 }

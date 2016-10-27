@@ -21,7 +21,7 @@ public final class BackpropagationLearningRule implements LearningRule {
   private Layer[] ffLayers;
   private List<Feed> calibrationFeed;
   private List<Feed> calibrationFeedCopy;
-  private BasicNeuron[] neurons;
+  private BasicNeuron[][] neurons;
   private double[][] inputs;
   private double[][] outputs;
   private TransferFunctionType[] transferFunctions;
@@ -47,7 +47,8 @@ public final class BackpropagationLearningRule implements LearningRule {
     while (true) {
       stepsCounter++;
       System.out.println("Step: " + stepsCounter);
-      calibrateForInput(pickCalibrationFeed());
+      //calibrateForInput(pickCalibrationFeed());
+      calibrateForInput(calibrationFeed.get(15));
 
       if (calibrationFeedCopy.size() == 0) {
         Collections.addAll(calibrationFeedCopy, calibrationFeed.toArray(new Feed[0]));
@@ -67,6 +68,8 @@ public final class BackpropagationLearningRule implements LearningRule {
       outputs[i] = calibrationFeed.get(i).getOutputs();
     }
 
+    neurons = new BasicNeuron[ffLayers.length][];
+
     transferFunctions = new TransferFunctionType[ffLayers.length];
     transferFunctions[0] = TransferFunctionType.LOG_SIGMOID;
     transferFunctions[1] = TransferFunctionType.LINEAR;
@@ -75,28 +78,32 @@ public final class BackpropagationLearningRule implements LearningRule {
     BasicNeuron[] hiddenLayerNeurons = Stream.generate(() -> new BasicNeuron(hiddenLayerTransferFunction)).limit(2).toArray(BasicNeuron[]::new);
     Stream.of(hiddenLayerNeurons).forEach(neuron -> { neuron.setBias(generateRandomWeight());
                                                       neuron.setWeights(generateRandomWeights(inputCount)); });
-    ffLayers[0].adjust(hiddenLayerNeurons);
-//    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
-//       new BasicNeuron(hiddenLayerTransferFunction),
-//       new BasicNeuron(hiddenLayerTransferFunction)
-//    };
-//    testhiddenLayerNeurons[0].setWeights(new double[] { -0.27 });
-//    testhiddenLayerNeurons[0].setBias(-0.48);
-//    testhiddenLayerNeurons[1].setWeights(new double[] { -0.41 });
-//    testhiddenLayerNeurons[1].setBias(-0.13);
-//    ffLayers[0].adjust(testhiddenLayerNeurons);
+    neurons[0] = hiddenLayerNeurons;
+    ffLayers[0].adjust(neurons[0]);
+    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
+       new BasicNeuron(hiddenLayerTransferFunction),
+       new BasicNeuron(hiddenLayerTransferFunction)
+    };
+    testhiddenLayerNeurons[0].setWeights(new double[] { -0.27 });
+    testhiddenLayerNeurons[0].setBias(-0.48);
+    testhiddenLayerNeurons[1].setWeights(new double[] { -0.41 });
+    testhiddenLayerNeurons[1].setBias(-0.13);
+    neurons[0] = testhiddenLayerNeurons;
+    ffLayers[0].adjust(testhiddenLayerNeurons);
 
     DoubleUnaryOperator outputLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(transferFunctions[1]);
     BasicNeuron[] outputLayerNeurons = Stream.generate(() -> new BasicNeuron(outputLayerTransferFunction)).limit(outputCount).toArray(BasicNeuron[]::new);
     Stream.of(outputLayerNeurons).forEach(neuron -> { neuron.setBias(generateRandomWeight());
                                                       neuron.setWeights(generateRandomWeights(hiddenLayerNeurons.length)); });
-    ffLayers[1].adjust(outputLayerNeurons);
-//    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
-//        new BasicNeuron(outputLayerTransferFunction)
-//    };
-//    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
-//    testOutputLayerNeurons[0].setBias(0.48);
-//    ffLayers[1].adjust(testOutputLayerNeurons);
+    neurons[1] = outputLayerNeurons;
+    ffLayers[1].adjust(neurons[1]);
+    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
+        new BasicNeuron(outputLayerTransferFunction)
+    };
+    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
+    testOutputLayerNeurons[0].setBias(0.48);
+    neurons[1] = testOutputLayerNeurons;
+    ffLayers[1].adjust(testOutputLayerNeurons);
   }
 
   private double[] generateRandomWeights(int weightsCount) {
@@ -131,40 +138,44 @@ public final class BackpropagationLearningRule implements LearningRule {
     System.out.println("Expected output: " + Arrays.toString(calibrationFeed.getOutputs()));
     System.out.println("Actual output: " + Arrays.toString(output));
 
-    for (int i = 0; i < calibrationFeed.getOutputs().length; i++) {
-      double error = calibrationFeed.getOutputs()[i] - output[i];
-      if (error != 0) {
-        System.out.println("Error: " + (calibrationFeed.getOutputs()[i] - output[i]));
-      }
+    double[] error = Calculator.subtractDoubleArrays(calibrationFeed.getOutputs(), output);
+    double[][] sensitivities = calculateSensitives(error, outputs);
+    System.out.println("Sensitivities:");
+    for (int i = 0; i < sensitivities.length; i++) {
+      System.out.println("Layer " + (i + 1) + ": " + Arrays.toString(sensitivities[i]));
     }
     return false;
   }
 
-  private double[] calculateSensitives(double[][] outputs) {
+  private double[][] calculateSensitives(double[] error, double[][] outputs) {
     double[][] sensitivities = new double[outputs.length][];
 
-    
-
-    
-
-    return null;
-  }
-
-  private double[] calculateLastLayerSensitivity(double error) {
-    double[] result = new double[ffLayers.length];
-
+    // Calculating the entry point - the last layer sensitivities
     DoubleUnaryOperator derivative = DerivativeFactory.getInstance().getDerivative(transferFunctions[transferFunctions.length - 1]);
+    double[][] jacobian = getJacobianMatrix(derivative, outputs[outputs.length - 1]);
+    double[][] errorMatrix = new double[][] { error };
+    double[][] lastLayerSensitive = Calculator.multiplyMatrices(Calculator.multiplyMatrix(jacobian, -2), errorMatrix);
+    sensitivities[sensitivities.length - 1] = Calculator.transposeMatrix(lastLayerSensitive)[0];
 
-    int neuronsCount = outputs[0].length;
+    // Backpropagating the sensitivities through the hidden layers
+    for (int i = sensitivities.length - 2; i > -1; i--) {
+      derivative = DerivativeFactory.getInstance().getDerivative(transferFunctions[i]);
+      jacobian = getJacobianMatrix(derivative, outputs[i]);
+      double[][] weights = new double[neurons[i + 1].length][];
+      for (int j = 0; j < neurons[i + 1].length; j++) {
+        weights[j] = neurons[i + 1][j].getWeights();
+      }
+      double[][] previousLayerSensitivities = new double[][] { sensitivities [i + 1] };
+      double[][] currentLayerSensitivities = Calculator.multiplyMatrices(Calculator.multiplyMatrices(getJacobianMatrix(derivative, outputs[i]), Calculator.transposeMatrix(weights)), previousLayerSensitivities);
+      sensitivities[i] = Calculator.transposeMatrix(currentLayerSensitivities)[0];
+    }
 
-    double lastLayerSensitivity = -2 * derivative.applyAsDouble(0) * error;
-
-    return null;
+    return sensitivities;
   }
 
-  private static double[][] getJacobianMatrix(int size, DoubleUnaryOperator derivative, double[] output) {
-    double[][] matrix = new double[size][size];
-    for (int i = 0; i < size; i++) {
+  private static double[][] getJacobianMatrix(DoubleUnaryOperator derivative, double[] output) {
+    double[][] matrix = new double[output.length][output.length];
+    for (int i = 0; i < output.length; i++) {
       matrix[i][i] = Calculator.roundDouble(derivative.applyAsDouble(output[i]));
     }
     return matrix;
@@ -174,7 +185,7 @@ public final class BackpropagationLearningRule implements LearningRule {
     int size = 2;
     DoubleUnaryOperator derivative = DerivativeFactory.getInstance().getDerivative(TransferFunctionType.LOG_SIGMOID);
     double[] output = new double[] { 0.321, 0.368 };
-    double[][] result = getJacobianMatrix(size, derivative, output);
+    double[][] result = getJacobianMatrix(derivative, output);
     for (int i = 0; i < result.length; i++) {
       System.out.println(Arrays.toString(result[i]));
     }

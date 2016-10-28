@@ -25,7 +25,7 @@ public final class BackpropagationLearningRule implements LearningRule {
   private double[][] inputs;
   private double[][] outputs;
   private TransferFunctionType[] transferFunctions;
-  //private double learningRate;
+  private double learningRate;
   //private double acceptableError;
 
   public BackpropagationLearningRule(Layer[] ffLayers, List<Feed> calibrationFeed) {
@@ -38,10 +38,8 @@ public final class BackpropagationLearningRule implements LearningRule {
   @Override
   public void converge() {
     initNeurons();
-//    Feed calibrationFeed = new Feed();
-//    calibrationFeed.setInputs(new double[] { 1 });
-//    calibrationFeed.setOutputs(new double[] { 1.7071 });
-//    calibrateForInput(calibrationFeed);
+
+    learningRate = 0.1;
 
     int stepsCounter = 0;
     while (true) {
@@ -144,7 +142,11 @@ public final class BackpropagationLearningRule implements LearningRule {
     for (int i = 0; i < sensitivities.length; i++) {
       System.out.println("Layer " + (i + 1) + ": " + Arrays.toString(sensitivities[i]));
     }
-    return false;
+
+    for (int i = 0; i < sensitivities.length; i++) {
+      
+    }
+    return true;
   }
 
   private double[][] calculateSensitives(double[] error, double[][] outputs) {

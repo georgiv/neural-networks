@@ -26,7 +26,7 @@ public final class BackpropagationLearningRule implements LearningRule {
   private double[][] outputs;
   private TransferFunctionType[] transferFunctions;
   private double learningRate;
-  //private double acceptableError;
+  private double acceptableError;
 
   public BackpropagationLearningRule(Layer[] ffLayers, List<Feed> calibrationFeed) {
     this.ffLayers = ffLayers;
@@ -40,13 +40,23 @@ public final class BackpropagationLearningRule implements LearningRule {
     initNeurons();
 
     learningRate = 0.1;
+    acceptableError = 0.02;
 
     int stepsCounter = 0;
+    int successfulStepsCounter = 0;
     while (true) {
       stepsCounter++;
       System.out.println("Step: " + stepsCounter);
-      //calibrateForInput(pickCalibrationFeed());
-      calibrateForInput(calibrationFeed.get(15));
+      if (calibrateForInput(pickCalibrationFeed())) { //calibrateForInput(calibrationFeed.get(15));
+        successfulStepsCounter++;
+      } else {
+        successfulStepsCounter = 0;
+      }
+
+      if (successfulStepsCounter == calibrationFeed.size()) {
+        System.out.println("Converged!");
+        break;
+      }
 
       if (calibrationFeedCopy.size() == 0) {
         Collections.addAll(calibrationFeedCopy, calibrationFeed.toArray(new Feed[0]));
@@ -78,16 +88,16 @@ public final class BackpropagationLearningRule implements LearningRule {
                                                       neuron.setWeights(generateRandomWeights(inputCount)); });
     neurons[0] = hiddenLayerNeurons;
     ffLayers[0].adjust(neurons[0]);
-    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
-       new BasicNeuron(hiddenLayerTransferFunction),
-       new BasicNeuron(hiddenLayerTransferFunction)
-    };
-    testhiddenLayerNeurons[0].setWeights(new double[] { -0.27 });
-    testhiddenLayerNeurons[0].setBias(-0.48);
-    testhiddenLayerNeurons[1].setWeights(new double[] { -0.41 });
-    testhiddenLayerNeurons[1].setBias(-0.13);
-    neurons[0] = testhiddenLayerNeurons;
-    ffLayers[0].adjust(testhiddenLayerNeurons);
+//    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
+//       new BasicNeuron(hiddenLayerTransferFunction),
+//       new BasicNeuron(hiddenLayerTransferFunction)
+//    };
+//    testhiddenLayerNeurons[0].setWeights(new double[] { -0.27 });
+//    testhiddenLayerNeurons[0].setBias(-0.48);
+//    testhiddenLayerNeurons[1].setWeights(new double[] { -0.41 });
+//    testhiddenLayerNeurons[1].setBias(-0.13);
+//    neurons[0] = testhiddenLayerNeurons;
+//    ffLayers[0].adjust(testhiddenLayerNeurons);
 
     DoubleUnaryOperator outputLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(transferFunctions[1]);
     BasicNeuron[] outputLayerNeurons = Stream.generate(() -> new BasicNeuron(outputLayerTransferFunction)).limit(outputCount).toArray(BasicNeuron[]::new);
@@ -98,10 +108,10 @@ public final class BackpropagationLearningRule implements LearningRule {
     BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
         new BasicNeuron(outputLayerTransferFunction)
     };
-    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
-    testOutputLayerNeurons[0].setBias(0.48);
-    neurons[1] = testOutputLayerNeurons;
-    ffLayers[1].adjust(testOutputLayerNeurons);
+//    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
+//    testOutputLayerNeurons[0].setBias(0.48);
+//    neurons[1] = testOutputLayerNeurons;
+//    ffLayers[1].adjust(testOutputLayerNeurons);
   }
 
   private double[] generateRandomWeights(int weightsCount) {
@@ -129,7 +139,16 @@ public final class BackpropagationLearningRule implements LearningRule {
       output = ffLayers[i].activate(output);
       outputs[i] = output;
     }
-    if (Arrays.equals(calibrationFeed.getOutputs(), output)) {
+
+    // Validating the output
+    int successfulOutputCounter = 0;
+    for (int i = 0; i < output.length; i++) {
+      double error = Calculator.roundDouble(calibrationFeed.getOutputs()[i] - output[i]);
+      if (Math.abs(error) <= acceptableError) {
+        successfulOutputCounter++;
+      }
+    }
+    if (successfulOutputCounter == calibrationFeed.getInputs().length) {
       return true;
     }
 
@@ -143,10 +162,48 @@ public final class BackpropagationLearningRule implements LearningRule {
       System.out.println("Layer " + (i + 1) + ": " + Arrays.toString(sensitivities[i]));
     }
 
-    for (int i = 0; i < sensitivities.length; i++) {
-      
+    for (int i = neurons.length  -1; i >= 0; i--) {
+      BasicNeuron[] currentNeurons = neurons[i];
+      double[][] currentWeights = new double[currentNeurons.length][];
+      double[] currentBias = new double[currentNeurons.length];
+      for (int j = 0; j < currentNeurons.length; j++) {
+        currentWeights[j] = currentNeurons[j].getWeights();
+        currentBias[j] = currentNeurons[j].getBias();
+      }
+
+      double[] currentSensitives = sensitivities[i];
+
+      double[] currentOutput = null;
+      if (i > 0) {
+        currentOutput = outputs[i - 1];
+      } else {
+        currentOutput = calibrationFeed.getInputs();
+      }
+
+      double[][] currentSensitivesMatrix = Calculator.transposeMatrix(new double[][] { currentSensitives });
+      double[][] currentOutputMatrix = new double[][] { currentOutput };
+      double[][] currentBiasMatrix = Calculator.transposeMatrix(new double[][] { currentBias });
+      double[][] subtrahend = Calculator.multiplyMatrix(Calculator.multiplyMatrices(currentSensitivesMatrix, new double[][] { currentOutput }), learningRate);
+      double[][] newWeights = Calculator.subtractMatrices(currentWeights, subtrahend);
+      double[][] newBias = Calculator.subtractMatrices(currentBiasMatrix, Calculator.multiplyMatrix(currentSensitivesMatrix, learningRate));
+
+      System.out.println("Layer " + i);
+      System.out.println("Weights");
+      for (int j = 0; j < newWeights.length; j++) {
+        System.out.println(Arrays.toString(newWeights[j]));
+      }
+      System.out.println("Bias");
+      for (int j = 0; j < newBias.length; j++) {
+        System.out.println(Arrays.toString(newBias[j]));
+      }
+
+      for (int j = 0; j < currentNeurons.length; j++) {
+        currentNeurons[j].setWeights(newWeights[j]);
+        currentNeurons[j].setBias(newBias[j][0]);
+      }
     }
-    return true;
+
+    return false;
   }
 
   private double[][] calculateSensitives(double[] error, double[][] outputs) {

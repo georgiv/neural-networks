@@ -1,4 +1,4 @@
-package joro.nn.impl.learningrules;
+package joro.nn.impl.learningrules.backpropagation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,7 +17,10 @@ import joro.nn.impl.core.TransferFunctionFactory;
 import joro.nn.impl.core.TransferFunctionType;
 import joro.nn.impl.utils.Calculator;
 
-public final class BackpropagationLearningRule implements LearningRule {
+/**
+ * Steepest descent backpropagation
+ */
+public final class SDBP implements LearningRule {
   private Layer[] ffLayers;
   private List<Feed> calibrationFeed;
   private List<Feed> calibrationFeedCopy;
@@ -28,7 +31,7 @@ public final class BackpropagationLearningRule implements LearningRule {
   private double learningRate;
   private double acceptableError;
 
-  public BackpropagationLearningRule(Layer[] ffLayers, List<Feed> calibrationFeed) {
+  public SDBP(Layer[] ffLayers, List<Feed> calibrationFeed) {
     this.ffLayers = ffLayers;
     this.calibrationFeed = calibrationFeed;
     calibrationFeedCopy = new ArrayList<>();
@@ -105,9 +108,9 @@ public final class BackpropagationLearningRule implements LearningRule {
                                                       neuron.setWeights(generateRandomWeights(hiddenLayerNeurons.length)); });
     neurons[1] = outputLayerNeurons;
     ffLayers[1].adjust(neurons[1]);
-    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
-        new BasicNeuron(outputLayerTransferFunction)
-    };
+//    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
+//        new BasicNeuron(outputLayerTransferFunction)
+//    };
 //    testOutputLayerNeurons[0].setWeights(new double[] { 0.09, -0.17 });
 //    testOutputLayerNeurons[0].setBias(0.48);
 //    neurons[1] = testOutputLayerNeurons;
@@ -131,9 +134,9 @@ public final class BackpropagationLearningRule implements LearningRule {
     return calibrationFeedCopy.remove(index);
   }
 
-  private boolean calibrateForInput(Feed calibrationFeed) {
+  private boolean calibrateForInput(Feed feed) {
     double[][] outputs = new double[ffLayers.length][];
-    double[] output = ffLayers[0].activate(calibrationFeed.getInputs());
+    double[] output = ffLayers[0].activate(feed.getInputs());
     outputs[0] = output;
     for (int i = 1; i < ffLayers.length; i++) {
       output = ffLayers[i].activate(output);
@@ -143,19 +146,19 @@ public final class BackpropagationLearningRule implements LearningRule {
     // Validating the output
     int successfulOutputCounter = 0;
     for (int i = 0; i < output.length; i++) {
-      double error = Calculator.roundDouble(calibrationFeed.getOutputs()[i] - output[i]);
+      double error = Calculator.roundDouble(feed.getOutputs()[i] - output[i]);
       if (Math.abs(error) <= acceptableError) {
         successfulOutputCounter++;
       }
     }
-    if (successfulOutputCounter == calibrationFeed.getInputs().length) {
+    if (successfulOutputCounter == feed.getInputs().length) {
       return true;
     }
 
-    System.out.println("Expected output: " + Arrays.toString(calibrationFeed.getOutputs()));
+    System.out.println("Expected output: " + Arrays.toString(feed.getOutputs()));
     System.out.println("Actual output: " + Arrays.toString(output));
 
-    double[] error = Calculator.subtractDoubleArrays(calibrationFeed.getOutputs(), output);
+    double[] error = Calculator.subtractDoubleArrays(feed.getOutputs(), output);
     double[][] sensitivities = calculateSensitives(error, outputs);
     System.out.println("Sensitivities:");
     for (int i = 0; i < sensitivities.length; i++) {
@@ -177,7 +180,7 @@ public final class BackpropagationLearningRule implements LearningRule {
       if (i > 0) {
         currentOutput = outputs[i - 1];
       } else {
-        currentOutput = calibrationFeed.getInputs();
+        currentOutput = feed.getInputs();
       }
 
       double[][] currentSensitivesMatrix = Calculator.transposeMatrix(new double[][] { currentSensitives });

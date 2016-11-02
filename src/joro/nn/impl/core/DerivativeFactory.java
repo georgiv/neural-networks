@@ -33,7 +33,7 @@ public final class DerivativeFactory {
         break;
       case SYMMETRIC_SATURATING_LINEAR: derivative = null; //TODO: implement derivative for satlins
         break;
-      case LOG_SIGMOID: derivative = i -> 2 * i;//derivative = i -> (1 - i) * i; //logsig
+      case LOG_SIGMOID: derivative = i -> (1 - i) * i; //logsig
         break;
       case HYPERBOLIC_TANGENT_SIGMOID: derivative = null; //TODO: implement derivative for tansig
         break;

@@ -37,32 +37,28 @@ public final class LMBP implements LearningRule {
   public void converge() {
     initNeurons();
 
-    int stepsCounter = 0;
-    int successfulStepsCounter = 0;
     while (true) {
-      stepsCounter++;
-
-      double[][][] allOutputs = new double[calibrationFeed.size()][][];
+      double[][][] outputs = new double[calibrationFeed.size()][][];
       double[][] errors = new double[calibrationFeed.size()][];
       double[][][][] sensitivities = new double[calibrationFeed.size()][][][];
 
       for (int i = 0; i < calibrationFeed.size(); i++) {
-        double[][] layersOutput = new double[ffLayers.length][];
-        double[] networkOutput = ffLayers[0].activate(calibrationFeed.get(i).getInputs());
+        double[][] layerOutputs = new double[ffLayers.length][];
         double[][][] currentSensitivities = new double[ffLayers.length][][];
 
-        // Calculate all outputs from all layers for each input and errors
-        layersOutput[0] = negateTransferFunction(networkOutput, transferFunctions[0]);
+        // Calculate output and errors for given input for all layers
+        double[] networkOutput = ffLayers[0].activate(calibrationFeed.get(i).getInputs());
+        layerOutputs[0] = networkOutput;
         for (int j = 1; j < ffLayers.length; j++) {
           networkOutput = ffLayers[j].activate(networkOutput);
-          layersOutput[j] = negateTransferFunction(networkOutput, transferFunctions[j]);
+          layerOutputs[j] = networkOutput;
         }
-        allOutputs[i] = layersOutput;
+        outputs[i] = layerOutputs;
         errors[i] = Calculator.subtractDoubleArrays(calibrationFeed.get(i).getOutputs(), networkOutput);
 
-        // Calculating last layer sensitivities
+        // Calculating last layer sensitivities for given input
         DoubleUnaryOperator derivative = DerivativeFactory.getInstance().getDerivative(transferFunctions[transferFunctions.length - 1]);
-        double[] layerOutput = layersOutput[layersOutput.length - 1];
+        double[] layerOutput = layerOutputs[layerOutputs.length - 1];
         double[][] multiplier = new double[layerOutput.length][layerOutput.length];
         for (int j = 0; j < layerOutput.length; j++) {
           multiplier[j][j] = Calculator.roundDouble(derivative.applyAsDouble(layerOutput[j]));
@@ -72,7 +68,7 @@ public final class LMBP implements LearningRule {
         // Backpropagating the sensitivities through the hidden layers
         for (int j = currentSensitivities.length - 2; j >= 0; j--) {
           derivative = DerivativeFactory.getInstance().getDerivative(transferFunctions[j]);
-          layerOutput = layersOutput[j];
+          layerOutput = layerOutputs[j];
           multiplier = new double[layerOutput.length][layerOutput.length];
           for (int k = 0; k < layerOutput.length; k++) {
             multiplier[k][k] = Calculator.roundDouble(derivative.applyAsDouble(layerOutput[k]));
@@ -96,7 +92,36 @@ public final class LMBP implements LearningRule {
         }
       }
       double[][] jacobian = new double[sensitivities.length][variablesCounter];
-      
+      for (int i = 0; i < sensitivities.length; i++) {
+        int counter = 0;
+        double[][][] currentSensitivities = sensitivities[i];
+        double[][] currentOutputs = outputs[i];
+        for (int j = 0; j < currentSensitivities.length; j++) {
+          double[][] currentLayerSensitivities = currentSensitivities[j];
+          BasicNeuron[] currentLayerNeurons = neurons[j];
+          double[] currentLayerOutputs = null;
+          if (j > 0) {
+            currentLayerOutputs = currentOutputs[j - 1];
+          } else {
+            currentLayerOutputs = inputs[i];
+          }
+          for (int k = 0; k < currentLayerSensitivities.length; k++) {
+            double currentNeuronSensitivity = currentLayerSensitivities[k][0];
+            double[] currentNeuronWeights = currentLayerNeurons[k].getWeights();
+            double currentNeuronBias = currentLayerNeurons[k].getBias();
+            for (int l = 0; l < currentNeuronWeights.length; l++) {
+              jacobian[i][counter] = currentLayerOutputs[l] * currentNeuronSensitivity;
+              counter++;
+            }
+            jacobian[i][counter] = currentNeuronSensitivity;
+            counter++;
+          }
+        }
+      }
+      for (int i = 0; i < jacobian.length; i++) {
+        System.out.println(Arrays.toString(jacobian[i]));
+      }
+      break;
     }
   }
 
@@ -125,13 +150,13 @@ public final class LMBP implements LearningRule {
     neurons[0] = hiddenLayerNeurons;
     ffLayers[0].adjust(neurons[0]);
 
-    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
-      new BasicNeuron(n -> n * n)
-    };
-    testhiddenLayerNeurons[0].setWeights(new double[] { 1 });
-    testhiddenLayerNeurons[0].setBias(0);
-    neurons[0] = testhiddenLayerNeurons;
-    ffLayers[0].adjust(testhiddenLayerNeurons);
+//    BasicNeuron[] testhiddenLayerNeurons = new BasicNeuron[] {
+//      new BasicNeuron(n -> n * n)
+//    };
+//    testhiddenLayerNeurons[0].setWeights(new double[] { 1 });
+//    testhiddenLayerNeurons[0].setBias(0);
+//    neurons[0] = testhiddenLayerNeurons;
+//    ffLayers[0].adjust(testhiddenLayerNeurons);
 
     DoubleUnaryOperator outputLayerTransferFunction = TransferFunctionFactory.getInstance().getTransferFunction(transferFunctions[1]);
     BasicNeuron[] outputLayerNeurons = Stream.generate(() -> new BasicNeuron(outputLayerTransferFunction)).limit(outputCount).toArray(BasicNeuron[]::new);
@@ -139,13 +164,14 @@ public final class LMBP implements LearningRule {
                                                       neuron.setWeights(generateRandomWeights(hiddenLayerNeurons.length)); });
     neurons[1] = outputLayerNeurons;
     ffLayers[1].adjust(neurons[1]);
-    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
-        new BasicNeuron(outputLayerTransferFunction)
-    };
-    testOutputLayerNeurons[0].setWeights(new double[] { 2 });
-    testOutputLayerNeurons[0].setBias(1);
-    neurons[1] = testOutputLayerNeurons;
-    ffLayers[1].adjust(testOutputLayerNeurons);
+
+//    BasicNeuron[] testOutputLayerNeurons = new BasicNeuron[] {
+//        new BasicNeuron(outputLayerTransferFunction)
+//    };
+//    testOutputLayerNeurons[0].setWeights(new double[] { 2 });
+//    testOutputLayerNeurons[0].setBias(1);
+//    neurons[1] = testOutputLayerNeurons;
+//    ffLayers[1].adjust(testOutputLayerNeurons);
   }
 
   private double[] generateRandomWeights(int weightsCount) {
@@ -158,20 +184,5 @@ public final class LMBP implements LearningRule {
 
   private double generateRandomWeight() {
     return Calculator.roundDouble(ThreadLocalRandom.current().nextDouble(-0.9, 1), 2);
-  }
-
-  private double[] negateTransferFunction(double[] values, TransferFunctionType transferFunction) {
-    double[] result = new double[values.length];
-    DoubleUnaryOperator antiTransferFunction = null;
-    switch (transferFunction) {
-      case LINEAR: antiTransferFunction = i -> i;
-        break;
-      default: antiTransferFunction = i -> Math.sqrt(i);
-        break;
-    }
-    for (int i = 0; i < result.length; i++) {
-      result[i] = antiTransferFunction.applyAsDouble(values[i]);
-    }
-    return result;
   }
 }

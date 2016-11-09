@@ -9,7 +9,7 @@ import joro.nn.impl.utils.CalibrationFeedGenerator;
 
 public class BackpropagationLearningRuleTest {
   public static void main(String[] args) {
-    List<Feed> tests_unknown01_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/backpropagation/01_unknown_problem.txt");
+    List<Feed> tests_unknown01_problem = CalibrationFeedGenerator.generate("./learning_rule_test_inputs/backpropagation/02_unknown_problem.txt");
     Network myNN_unknown01_problem = new MultiLayerPerception(tests_unknown01_problem);
     myNN_unknown01_problem.learn();
   }
